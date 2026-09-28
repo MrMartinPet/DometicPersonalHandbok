@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -22,6 +22,17 @@ jobs:
           python-version: '3.12'
       - name: Bygg sökbar handbok
         run: python scripts/build.py
+      - name: Synka webbapp till repots rot för Pages från main
+        run: |
+          cp dist/index.html dist/style.css dist/app.js dist/sw.js dist/manifest.webmanifest dist/icon.svg dist/icon-192.png dist/icon-512.png dist/catalog.json .
+          touch .nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f index.html style.css app.js sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png catalog.json .nojekyll
+          if ! git diff --cached --quiet; then
+            git commit -m "Update published handbook catalog"
+            git push origin HEAD:main
+          fi
       - uses: actions/configure-pages@v5
         with:
           enablement: true

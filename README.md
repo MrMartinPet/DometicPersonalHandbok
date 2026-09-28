@@ -2,11 +2,11 @@
 
 Mobilanpassad personalhandbok med fulltextsökning, kategorier, favoritmarkering och läsvy. Kan läggas på hemskärmen eller länkas från Dometic app-portalen.
 
-Adress efter aktiverad publicering: https://mrmartinpet.github.io/DometicPersonalHandbok/
+Adress: https://mrmartinpet.github.io/DometicPersonalHandbok/
 
 ## Dokument
 
-Lägg originalfiler i `dokument/`. Undermappar blir kategorier, till exempel `dokument/Arbetsmiljö/Rutin.docx`. GitHub Actions publicerar automatiskt efter varje commit till main. Inga interna rutiner eller påhittade policydokument medföljer.
+Lägg originalfiler i `dokument/`. Undermappar blir kategorier, till exempel `dokument/Arbetsmiljö/Rutin.docx`. GitHub Actions publicerar automatiskt efter varje commit till main. Tio personalrutiner finns nu i handboken. Lägg till fler i samma mappstruktur.
 
 DOCX och PPTX får sökbar text och läsvy. Wordtabeller visas som tabeller. PowerPointtext visas i bildordning. Bilder, diagram och ursprunglig layout läses i originalet som finns för nedladdning. DOC/PPT/PDF går att ladda ner och söka på filnamn och kategori; spara äldre Officefiler som DOCX/PPTX för fulltextsökning. Text i bilder OCR-tolkas inte.
 
@@ -14,7 +14,7 @@ Favoriter lagras lokalt i webbläsaren och följer dokumentets sökväg. Byte av
 
 ## Publicering
 
-Settings → Pages → Build and deployment → Source: **GitHub Actions**. Kör därefter arbetsflödet **Publicera Personalhandbok** om det inte redan körs. Automatisk Pages-aktivering kan kräva att en administratör först väljer källan manuellt.
+Pages är aktiverat. GitHub Actions bygger handboken vid varje commit till main och synkar även webbapp och katalog till repots rot för publicering från main. Se status under Actions.
 
 ## Lokal körning
 
