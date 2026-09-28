@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#192c2b"><meta name="description" content="Personalhandbok – rutiner och information för Dometic Tidaholm.">
+<title>Personalhandbok · Dometic</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Till innehållet</a>
+<aside class="sidebar">
+<a class="brand" href="#" aria-label="Personalhandbok, startsida"><span class="brand-mark">D</span><span>DOMETIC<small>TIDAHOLM</small></span></a>
+<div class="side-label">DIN ARBETSPLATS. NÄRA TILL HANDS.</div>
+<nav aria-label="Huvudmeny">
+<button class="nav active" data-view="home"><span aria-hidden="true">⌂</span> Översikt</button>
+<button class="nav" data-view="documents"><span aria-hidden="true">▤</span> Alla dokument <b id="nav-count">0</b></button>
+<button class="nav" data-view="favorites"><span aria-hidden="true">☆</span> Mina favoriter <b id="fav-count">0</b></button>
+</nav>
+<div class="side-bottom"><span class="book-icon" aria-hidden="true">▥</span><strong>Din handbok.<br>Alltid nära.</strong><p>Hitta rätt information när du behöver den.</p><button class="text-button install-help">Lägg till på hemskärmen ↗</button></div>
+<div class="side-foot">DOMETIC · PERSONALHANDBOK</div>
+</aside>
+<div class="workspace">
+<header class="topbar"><span class="mobile-brand">DOMETIC <i>/</i></span><span>Personalhandbok</span><button class="help-button install-help" aria-label="Om appen och installation">?</button></header>
+<main id="main" tabindex="-1">
+<section class="hero" id="hero"><div class="eyebrow"><span></span> FÖR OSS I TIDAHOLM</div><h1>Rätt information.<br><em>Nära till hands.</em></h1><p>Rutiner, riktlinjer och stöd i vardagen.<br>Samlat i din personalhandbok.</p><div class="hero-art" aria-hidden="true"><div class="paper back"></div><div class="paper front"><span>DOMETIC</span><i></i><i></i><i></i><b>Din<br>handbok.</b><small>TIDAHOLM</small></div><span class="art-star">✳</span></div></section>
+<section class="library" aria-labelledby="section-title">
+<div class="section-top"><div><div class="eyebrow muted" id="section-eyebrow">HITTA DET DU BEHÖVER</div><h2 id="section-title">Utforska handboken</h2></div><span class="total-pill" id="total">0 dokument</span></div>
+<div class="search-box"><span aria-hidden="true">⌕</span><label class="sr-only" for="search">Sök i handboken</label><input id="search" type="search" placeholder="Sök efter en rutin, ett ämne eller ett ord…" autocomplete="off"><kbd aria-hidden="true">/</kbd></div>
+<div id="categories" class="categories" aria-label="Filtrera kategori"></div>
+<div class="list-toolbar"><p id="results-count" role="status" aria-live="polite">Läser in dokument…</p><div><label class="sr-only" for="format">Filtyp</label><select id="format"><option value="all">Alla filtyper</option><option value="word">Word</option><option value="powerpoint">PowerPoint</option><option value="pdf">PDF</option></select><label class="sr-only" for="sort">Sortering</label><select id="sort"><option value="az">Namn A–Ö</option><option value="recent">Senast uppdaterade</option></select></div></div>
+<div id="documents" class="documents"></div>
+<div id="empty" class="empty" hidden><div class="empty-icon" aria-hidden="true">▤</div><h3 id="empty-title">Här börjar din handbok</h3><p id="empty-text"></p><button id="reset" class="secondary" hidden>Visa alla dokument</button></div>
+</section>
+<div class="bottom-note"><span aria-hidden="true">↗</span><div><strong>Word & PowerPoint. På ett ställe.</strong><p>Läs dokumentets text i appen eller öppna originalet med bilder och fullständig layout.</p></div></div>
+<footer>Personalhandbok <span>Dometic · Tidaholm</span></footer>
+</main></div>
+<nav class="mobile-nav" aria-label="Mobilmeny"><button class="active" data-view="home"><span aria-hidden="true">⌂</span>Översikt</button><button data-view="documents"><span aria-hidden="true">▤</span>Dokument</button><button data-view="favorites"><span aria-hidden="true">☆</span>Favoriter</button></nav>
+<dialog id="reader"><div class="reader-head"><button id="close-reader" class="secondary">← Tillbaka</button><button id="reader-favorite" class="secondary">☆ Spara</button></div><div class="reader-body"><div class="eyebrow muted" id="reader-meta"></div><h2 id="reader-title"></h2><div class="reader-actions"><a id="download" class="primary" download>Hämta original ↗</a><button id="share" class="secondary">Kopiera länk</button></div><p class="reading-note">Textvy · Bilder, diagram och fullständig formatering visas i originalfilen.</p><div id="reader-content"></div></div></dialog>
+<dialog id="help"><button id="close-help" class="close" aria-label="Stäng">×</button><div class="eyebrow muted">PERSONALHANDBOK</div><h2>En genväg till din vardag.</h2><p>Sök i dokumentens text, filtrera på kategori och spara dina favoriter på den här enheten.</p><h3>Lägg appen på hemskärmen</h3><p><strong>iPhone:</strong> öppna i Safari, tryck på Dela och välj Lägg till på hemskärmen.</p><p><strong>Android:</strong> öppna webbläsarens meny och välj Installera app eller Lägg till på startskärmen.</p><h3>Dokumenten</h3><p>Word (.docx) och PowerPoint (.pptx) får en sökbar textvy. Äldre .doc/.ppt och PDF kan laddas ner. Favoriter sparas bara i din webbläsare.</p></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js" defer></script>
+</body></html>
