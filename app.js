@@ -34,47 +34,64 @@ function updateReaderFavorite(){const saved=favorites.has(state.current.id);$('#
 function route(){if(!state.loaded||state.error)return;const match=location.hash.match(/^#dokument\/([a-f0-9]{16})$/);if(!match){if($('#reader').open)$('#reader').close();state.current=null;return;}
  const d=state.docs.find(x=>x.id===match[1]);if(!d){toast('Dokumentet finns inte längre i handboken.');history.replaceState(null,'',location.pathname+location.search);return;}
  state.current=d;$('#reader-title').textContent=d.title;$('#reader-meta').textContent=d.category+' · '+d.format+(d.updated?' · '+d.updated:'');$('#download').href=d.path.split('/').map(encodeURIComponent).join('/');$('#download').setAttribute('download',d.path.split('/').pop());updateReaderFavorite();const content=$('#reader-content');content.replaceChildren();if(d.warning)content.append(el('p','reading-note',d.warning));
- for(const block of d.blocks){if(block.type==='table'){const wrap=el('div','table-wrap');const table=el('table');table.setAttribute('aria-label','Tabell från '+d.title);for(const row of block.rows){const tr=el('tr');for(const cell of row)tr.append(el('td','',cell));table.append(tr);}wrap.append(table);content.append(wrap);}else content.append(el(block.type==='heading'?'h3':'p','',block.text));}
- if(!$('#reader').open)$('#reader').showModal();$('#reader').scrollTop=0;
+ for(const [index,block] of d.blocks.entries()){const matched=state.highlight?.id===d.id&&state.highlight.index===index;if(block.type==='table'){const wrap=el('div','table-wrap');const table=el('table');table.setAttribute('aria-label','Tabell från '+d.title);for(const row of block.rows){const tr=el('tr');for(const cell of row)tr.append(el('td','',cell));table.append(tr);}wrap.append(table);if(matched)wrap.classList.add('reader-match');content.append(wrap);}else{const node=el(block.type==='heading'?'h3':'p');if(matched){node.classList.add('reader-match');highlighted(node,block.text,state.highlight.terms);}else node.textContent=block.text;content.append(node);}}
+ if(!$('#reader').open)$('#reader').showModal();const matchNode=content.querySelector('.reader-match');if(matchNode)requestAnimationFrame(()=>matchNode.scrollIntoView({block:'center'}));else $('#reader').scrollTop=0;state.highlight=null;
 }
-async function load(){state.loaded=false;state.error=false;render();try{const r=await fetch('catalog.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.documents))throw Error('Invalid catalog');state.docs=data.documents;}catch{state.error=true;}state.loaded=true;render();route();}
-const stopWords=new Set('jag du vi man får kan ska hur vad när var vem vilka vilket vilken gäller med för från till den det ett en och eller om på av i är som de att min mitt mina har finns göra gör blir hos enligt rutin rutinen'.split(' '));
-const words=s=>normalize(s).match(/[a-zåäö0-9]+/g)||[];
-const stem=s=>s.replace(/(arna|erna|ande|heten|ningar|ning|orna|arna|arna|ens|ets|are|ade|ing|en|et|er|ar|or|na|an|s)$/,'');
+async function load(){state.loaded=false;state.error=false;render();try{const r=await fetch('catalog.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.documents))throw Error('Invalid catalog');state.docs=data.documents;}catch{state.error=true;}state.loaded=true;render();route();if(pendingQuestion)showAnswer(pendingQuestion);}
+const stopWords=new Set('jag du vi man får kan ska hur vad när var vem vilka vilket vilken gäller med för från till den det ett en och eller om på av i är som de att min mitt mina har finns göra gör blir hos enligt rutin rutinen det här detta mycket'.split(' ').map(normalize));
+const words=s=>normalize(s).match(/[a-z0-9]+/g)||[];
+const stem=s=>s.replace(/(arna|erna|ande|heten|ningar|ning|orna|ens|ets|are|ade|ing|en|et|er|ar|or|na|an|s)$/,'');
+const related={kostnad:['pris','avgift','belopp','betala','kronor','kr','ersattning'],kost:['pris','avgift','belopp','betala','kronor','kr'],reparer:['reparation','reparera','service','underhall','lagning'],cykel:['cyklar','cykeln','cykelforman','formanscykel']};
+function queryTerms(question){return [...new Set(words(question).filter(w=>w.length>2&&!stopWords.has(w)).map(stem).filter(w=>w.length>2))];}
+function matchesTerm(word,term){const w=stem(word);if(w.startsWith(term)||term.startsWith(w)&&w.length>4)return true;return Object.entries(related).some(([key,alternatives])=>(term.startsWith(key)||key.startsWith(term))&&alternatives.some(a=>{const root=stem(a);return root.length>3&&(w.startsWith(root)||w.includes(root));}));}
 function answerQuestion(question){
-  const terms=[...new Set(words(question).filter(w=>w.length>2&&!stopWords.has(w)).map(stem).filter(w=>w.length>2))];
-  if(!terms.length)return [];
+  const terms=queryTerms(question);if(!terms.length)return {hits:[],related:[]};
   const candidates=[];
   for(const doc of state.docs){
-    if(!doc.blocks?.length)continue;
-    const title=normalize(doc.title+' '+doc.category);let heading='';
-    for(const block of doc.blocks){
-      if(block.type==='heading'){heading=block.text;continue;}
+    if(!doc.blocks?.length)continue;let heading='';
+    for(let index=0;index<doc.blocks.length;index++){
+      const block=doc.blocks[index];if(block.type==='heading'){heading=block.text;continue;}
       const passages=block.type==='table'?block.rows.map(row=>row.join(' · ')):[block.text];
       for(const passage of passages){
-        const clean=passage.replace(/\s+/g,' ').trim();if(clean.length<24||clean.startsWith('Den här bilden saknar läsbar text'))continue;
-        const body=words(clean).map(stem);const context=words(title+' '+heading).map(stem);
-        const bodyHits=terms.filter(t=>body.some(w=>w.startsWith(t)||t.startsWith(w)&&w.length>3));
-        const contextHits=terms.filter(t=>context.some(w=>w.startsWith(t)||t.startsWith(w)&&w.length>3));
-        if(!bodyHits.length&&!contextHits.length)continue;
-        const coverage=new Set([...bodyHits,...contextHits]).size/terms.length;
-        const score=bodyHits.length*4+contextHits.length*2+coverage*4+(bodyHits.length&&contextHits.length?2:0)-Math.min(clean.length/900,2);
-        candidates.push({doc,passage:clean,score,coverage,bodyHits:bodyHits.length});
+        const clean=passage.replace(/\s+/g,' ').trim();if(clean.length<22||clean.startsWith('Den här bilden saknar läsbar text'))continue;
+        const body=words(clean),context=words(doc.title+' '+doc.category+' '+heading);
+        const bodyHits=terms.filter(t=>body.some(w=>matchesTerm(w,t)));
+        const contextHits=terms.filter(t=>context.some(w=>matchesTerm(w,t)));
+        const covered=new Set([...bodyHits,...contextHits]);if(!covered.size)continue;
+        const exact=terms.every(t=>covered.has(t));
+        const intent=words(question).some(w=>['vem','vilka'].includes(w))&&/anställd|medarbetare|villkor/i.test(clean)?5:0;
+        const score=bodyHits.length*5+contextHits.length*2+covered.size/terms.length*5+(exact?5:0)+intent-Math.min(clean.length/1000,2);
+        candidates.push({doc,index,passage:clean,score,exact,covered:covered.size,bodyHits:bodyHits.length,titleHits:terms.filter(t=>words(doc.title).some(w=>matchesTerm(w,t))).length});
       }
     }
   }
-  return candidates.filter(x=>x.coverage>=.5&&(x.bodyHits>0||x.coverage===1)&&x.score>=5).sort((a,b)=>b.score-a.score).slice(0,3);
+  const ordered=candidates.sort((a,b)=>b.score-a.score);
+  const hits=ordered.filter(x=>x.exact&&x.bodyHits>0).slice(0,3);
+  const seen=new Set(hits.map(x=>x.doc.id));
+  const suggestions=ordered.filter(x=>{if(seen.has(x.doc.id)||!x.titleHits||x.covered<Math.max(1,terms.length-1))return false;seen.add(x.doc.id);return true;}).slice(0,2);
+  return {hits,related:suggestions};
 }
+function highlighted(target,value,terms){
+  const parts=value.split(/([\p{L}\p{N}]+)/u);for(const part of parts){
+    if(part&&terms.some(t=>matchesTerm(normalize(part),t)))target.append(el('mark','',part));else target.append(document.createTextNode(part));
+  }
+}
+let pendingQuestion='';
 function showAnswer(question){
-  const box=$('#answer');box.hidden=false;box.replaceChildren();
-  if(state.error||!state.loaded){box.append(el('h3','','Handboken kunde inte läsas in'),el('p','','Kontrollera anslutningen och försök igen.'));return;}
-  const hits=answerQuestion(question);
-  if(!hits.length){box.append(el('h3','','Jag hittar inget säkert svar i rutinerna'),el('p','','Prova andra ord eller sök bland dokumenten nedan.'));return;}
-  box.append(el('h3','','Det här står i rutinerna'));
-  hits.forEach((hit,i)=>{const item=el('article','answer-hit');item.append(el('p','answer-quote',hit.passage));const link=el('a','answer-source',`${hit.doc.title} · ${hit.doc.format} →`);link.href='#dokument/'+hit.doc.id;item.append(link);box.append(item);});
-  box.append(el('p','answer-caution','Utdrag ur dokumenten. Läs hela rutinen för sammanhang och eventuella undantag.'));
+  pendingQuestion=question;const box=$('#answer');box.replaceChildren();
+  if(!question.trim()){box.hidden=true;return;}box.hidden=false;
+  if(!state.loaded){box.append(el('p','','Läser in rutiner…'));return;}
+  if(state.error){box.append(el('p','','Handboken kunde inte hämtas. Kontrollera anslutningen.'));return;}
+  const {hits,related}=answerQuestion(question);const terms=queryTerms(question);
+  if(hits.length){box.append(el('h3','',`Träff i ${hits.length===1?'rutinen':'rutinerna'}`));
+    for(const hit of hits){const item=el('article','answer-hit');const quote=el('p','answer-quote');highlighted(quote,hit.passage,terms);item.append(quote);const link=el('a','answer-source',`${hit.doc.title} · Visa i rutinen →`);link.href='#dokument/'+hit.doc.id;link.addEventListener('click',()=>{state.highlight={id:hit.doc.id,index:hit.index,terms};if(location.hash==='#dokument/'+hit.doc.id)route();});item.append(link);box.append(item);}
+  }else box.append(el('h3','','Inget tydligt svar i rutinerna'),el('p','','Prova andra ord. Om frågan gäller pris eller reparation måste det framgå av dokumentet för att visas som svar.'));
+  if(related.length){box.append(el('h4','','Närliggande rutiner'));for(const hit of related){const link=el('a','answer-related',hit.doc.title+' →');link.href='#dokument/'+hit.doc.id;link.addEventListener('click',()=>{state.highlight={id:hit.doc.id,index:hit.index,terms};if(location.hash==='#dokument/'+hit.doc.id)route();});box.append(link);}}
+  box.append(el('p','answer-caution','Textutdrag ur rutinen. Öppna dokumentet och läs sammanhanget innan du använder informationen.'));
 }
-$('#ask-form').addEventListener('submit',e=>{e.preventDefault();showAnswer($('#question').value.trim());});
+const questionInput=$('#question');let questionTimer;
+questionInput.addEventListener('input',()=>{clearTimeout(questionTimer);const value=questionInput.value;questionTimer=setTimeout(()=>showAnswer(value),120);});
+$('#ask-form').addEventListener('submit',e=>{e.preventDefault();clearTimeout(questionTimer);showAnswer(questionInput.value.trim());});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.query='';state.category='Alla';state.format='all';$('#search').value='';$('#format').value='all';render();window.scrollTo({top:0,behavior:'instant'});});
 $('#search').addEventListener('input',e=>{state.query=e.target.value;render();});$('#format').onchange=e=>{state.format=e.target.value;render();};$('#sort').onchange=e=>{state.sort=e.target.value;render();};
 $('#reset').onclick=()=>{if(state.error){load();return;}state.query='';state.category='Alla';state.format='all';state.view='documents';$('#search').value='';$('#format').value='all';render();};
