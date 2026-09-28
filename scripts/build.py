@@ -11,9 +11,20 @@ P = '{http://schemas.openxmlformats.org/presentationml/2006/main}'
 SUPPORTED = {'.docx', '.pptx', '.doc', '.ppt', '.pdf'}
 
 def paragraphs(node, namespace):
-    return [] if node is None else [
-        ''.join(t.text or '' for t in p.iter(namespace+'t')).strip()
-        for p in node.iter(namespace+'p')]
+    if node is None:
+        return []
+    result = []
+    for paragraph in node.iter(namespace+'p'):
+        parts = []
+        for item in paragraph.iter():
+            if item.tag == namespace+'t':
+                parts.append(item.text or '')
+            elif item.tag == namespace+'tab':
+                parts.append('\t')
+            elif item.tag in {namespace+'br', namespace+'cr'}:
+                parts.append('\n')
+        result.append(''.join(parts).strip())
+    return result
 
 def extract(path):
     blocks = []
