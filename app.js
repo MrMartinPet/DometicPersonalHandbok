@@ -38,6 +38,43 @@ function route(){if(!state.loaded||state.error)return;const match=location.hash.
  if(!$('#reader').open)$('#reader').showModal();$('#reader').scrollTop=0;
 }
 async function load(){state.loaded=false;state.error=false;render();try{const r=await fetch('catalog.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.documents))throw Error('Invalid catalog');state.docs=data.documents;}catch{state.error=true;}state.loaded=true;render();route();}
+const stopWords=new Set('jag du vi man får kan ska hur vad när var vem vilka vilket vilken gäller med för från till den det ett en och eller om på av i är som de att min mitt mina har finns göra gör blir hos enligt rutin rutinen'.split(' '));
+const words=s=>normalize(s).match(/[a-zåäö0-9]+/g)||[];
+const stem=s=>s.replace(/(arna|erna|ande|heten|ningar|ning|orna|arna|arna|ens|ets|are|ade|ing|en|et|er|ar|or|na|an|s)$/,'');
+function answerQuestion(question){
+  const terms=[...new Set(words(question).filter(w=>w.length>2&&!stopWords.has(w)).map(stem).filter(w=>w.length>2))];
+  if(!terms.length)return [];
+  const candidates=[];
+  for(const doc of state.docs){
+    if(!doc.blocks?.length)continue;
+    const title=normalize(doc.title+' '+doc.category);let heading='';
+    for(const block of doc.blocks){
+      if(block.type==='heading'){heading=block.text;continue;}
+      const passages=block.type==='table'?block.rows.map(row=>row.join(' · ')):[block.text];
+      for(const passage of passages){
+        const clean=passage.replace(/\s+/g,' ').trim();if(clean.length<24||clean.startsWith('Den här bilden saknar läsbar text'))continue;
+        const body=words(clean).map(stem);const context=words(title+' '+heading).map(stem);
+        const bodyHits=terms.filter(t=>body.some(w=>w.startsWith(t)||t.startsWith(w)&&w.length>3));
+        const contextHits=terms.filter(t=>context.some(w=>w.startsWith(t)||t.startsWith(w)&&w.length>3));
+        if(!bodyHits.length&&!contextHits.length)continue;
+        const coverage=new Set([...bodyHits,...contextHits]).size/terms.length;
+        const score=bodyHits.length*4+contextHits.length*2+coverage*4+(bodyHits.length&&contextHits.length?2:0)-Math.min(clean.length/900,2);
+        candidates.push({doc,passage:clean,score,coverage,bodyHits:bodyHits.length});
+      }
+    }
+  }
+  return candidates.filter(x=>x.coverage>=.5&&(x.bodyHits>0||x.coverage===1)&&x.score>=5).sort((a,b)=>b.score-a.score).slice(0,3);
+}
+function showAnswer(question){
+  const box=$('#answer');box.hidden=false;box.replaceChildren();
+  if(state.error||!state.loaded){box.append(el('h3','','Handboken kunde inte läsas in'),el('p','','Kontrollera anslutningen och försök igen.'));return;}
+  const hits=answerQuestion(question);
+  if(!hits.length){box.append(el('h3','','Jag hittar inget säkert svar i rutinerna'),el('p','','Prova andra ord eller sök bland dokumenten nedan.'));return;}
+  box.append(el('h3','','Det här står i rutinerna'));
+  hits.forEach((hit,i)=>{const item=el('article','answer-hit');item.append(el('p','answer-quote',hit.passage));const link=el('a','answer-source',`${hit.doc.title} · ${hit.doc.format} →`);link.href='#dokument/'+hit.doc.id;item.append(link);box.append(item);});
+  box.append(el('p','answer-caution','Utdrag ur dokumenten. Läs hela rutinen för sammanhang och eventuella undantag.'));
+}
+$('#ask-form').addEventListener('submit',e=>{e.preventDefault();showAnswer($('#question').value.trim());});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.query='';state.category='Alla';state.format='all';$('#search').value='';$('#format').value='all';render();window.scrollTo({top:0,behavior:'instant'});});
 $('#search').addEventListener('input',e=>{state.query=e.target.value;render();});$('#format').onchange=e=>{state.format=e.target.value;render();};$('#sort').onchange=e=>{state.sort=e.target.value;render();};
 $('#reset').onclick=()=>{if(state.error){load();return;}state.query='';state.category='Alla';state.format='all';state.view='documents';$('#search').value='';$('#format').value='all';render();};
