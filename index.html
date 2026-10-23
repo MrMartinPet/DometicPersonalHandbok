@@ -5,8 +5,37 @@
 <meta name="theme-color" content="#070b18"><meta name="description" content="Personalhandbok för Dometic Tidaholm. Sök och läs rutiner i mobilen.">
 <title>Personalhandbok · Dometic</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+<style>
+body.handbook-locked .shell, body.handbook-locked > dialog, body.handbook-locked > #toast { display:none!important; }
+.handbook-gate { min-height:100dvh; display:grid; place-items:center; padding:24px; background:#070b18; color:#f8fafc; font-family:Segoe UI,Arial,sans-serif; }
+.handbook-gate[hidden] { display:none; }
+.handbook-gate-card { width:100%; max-width:420px; padding:32px; border:1px solid #334155; border-radius:20px; background:#111827; box-sizing:border-box; }
+.handbook-gate-card h1 { margin:12px 0; font-size:28px; }
+.handbook-gate-card p { color:#b6c3d4; line-height:1.5; }
+.handbook-gate-card label { display:block; margin-bottom:8px; }
+.handbook-gate-card input, .handbook-gate-card button { width:100%; min-height:48px; box-sizing:border-box; padding:12px; border-radius:10px; font:inherit; }
+.handbook-gate-card input { background:#070b18; color:white; border:1px solid #64748b; }
+.handbook-gate-card button { margin-top:16px; border:0; background:#156082; color:white; cursor:pointer; }
+.handbook-gate-card :focus-visible { outline:3px solid #7dd3fc; outline-offset:3px; }
+.handbook-gate-card a { color:#7dd3fc; }
+#handbook-gate-error { min-height:1.5em; color:#fda4af; }
+</style>
 </head>
-<body>
+<body class="handbook-locked">
+<section class="handbook-gate" id="handbook-gate" aria-labelledby="handbook-gate-title">
+<div class="handbook-gate-card">
+<span>DOMETIC · TIDAHOLM</span>
+<h1 id="handbook-gate-title">Personalhandbok</h1>
+<p>Ange lösenordet för att öppna handboken.</p>
+<form id="handbook-gate-form">
+<label for="handbook-password">Lösenord</label>
+<input id="handbook-password" type="password" autocomplete="current-password" required autofocus aria-describedby="handbook-gate-error">
+<button type="submit">Öppna handboken</button>
+<p id="handbook-gate-error" role="status" aria-live="polite"></p>
+</form>
+<noscript><p>Aktivera JavaScript för att öppna handboken.</p></noscript>
+<a href="https://mrmartinpet.github.io/Dometic/">← Till appportalen</a>
+</div></section>
 <a class="skip" href="#main">Till innehållet</a>
 <div class="shell">
 <header class="site-header">
@@ -49,5 +78,55 @@
 <dialog id="reader"><div class="reader-head"><button id="close-reader" class="secondary">← Tillbaka</button><button id="reader-favorite" class="secondary">☆ Spara</button></div><div class="reader-body"><span class="eyebrow section-eyebrow" id="reader-meta"></span><h2 id="reader-title"></h2><div class="reader-actions"><a id="download" class="primary" download>Hämta original ↗</a><button id="share" class="secondary">Kopiera länk</button></div><p class="reading-note">Textvy · Bilder, diagram och fullständig formatering visas i originalfilen.</p><div id="reader-content"></div></div></dialog>
 <dialog id="help"><button id="close-help" class="close" aria-label="Stäng">×</button><span class="eyebrow section-eyebrow">PERSONALHANDBOK</span><h2>Allt på ett ställe.</h2><p>Sök i dokumentens text, filtrera på kategori och spara favoriter på den här enheten.</p><h3>Lägg till på hemskärmen</h3><p><strong>iPhone:</strong> öppna i Safari, tryck på Dela och välj Lägg till på hemskärmen.</p><p><strong>Android:</strong> öppna webbläsarens meny och välj Installera app eller Lägg till på startskärmen.</p><h3>Dokumenten</h3><p>Word (.docx) och PowerPoint (.pptx) får en sökbar textvy. Äldre .doc/.ppt och PDF kan laddas ner. Favoriter sparas bara i din webbläsare.</p></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js" defer></script>
+<script>
+(() => {
+  'use strict';
+  // Simple browser-side gate only; publicly hosted documents remain accessible.
+  const expected = '499a5598c5257bc81548e45d9da797478ca412aa4a4e187a9b729691ad3f0556';
+  const form = document.getElementById('handbook-gate-form');
+  const password = document.getElementById('handbook-password');
+  const error = document.getElementById('handbook-gate-error');
+  let opening = false;
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (opening) return;
+    opening = true;
+    const button = form.querySelector('button');
+    button.disabled = true;
+    error.textContent = '';
+    try {
+      const bytes = new TextEncoder().encode(password.value);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      const actual = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+      if (actual !== expected) {
+        error.textContent = 'Fel lösenord. Försök igen.';
+        password.value = '';
+        password.focus();
+        return;
+      }
+      password.value = '';
+      const app = document.createElement('script');
+      app.src = 'app.js';
+      app.onload = () => {
+        document.getElementById('handbook-gate').hidden = true;
+        document.body.classList.remove('handbook-locked');
+        document.getElementById('main').focus();
+      };
+      app.onerror = () => {
+        error.textContent = 'Handboken kunde inte öppnas. Försök igen.';
+        opening = false;
+        button.disabled = false;
+      };
+      document.body.append(app);
+    } catch {
+      error.textContent = 'Lösenordet kunde inte kontrolleras. Öppna sidan i en uppdaterad webbläsare via HTTPS.';
+    } finally {
+      if (document.body.classList.contains('handbook-locked') && !document.querySelector('script[src="app.js"]')) {
+        opening = false;
+        button.disabled = false;
+      }
+    }
+  });
+})();
+</script>
 </body></html>
