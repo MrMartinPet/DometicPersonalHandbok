@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
   <script src="app.js" defer></script>
+<style>.install-action{margin-left:auto;white-space:nowrap;padding:10px 14px;font-size:12px}.install-tile{cursor:pointer}#install-from-help{margin:10px 0 6px}@media(max-width:720px){.install-action{font-size:11px;padding:9px 10px;margin-left:auto}.portal-link{display:none}}</style>
 </head>
 <body>
 <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -43,6 +44,7 @@
         <a class="nav" href="#favoriter" data-view="favorites">Favoriter <b id="fav-count">–</b></a>
       </nav>
       <a class="portal-link" href="https://mrmartinpet.github.io/Dometic/">← Appportalen</a>
+      <button id="install-app" class="primary install-action" type="button">Installera app</button>
       <button class="help-button install-help" aria-label="Hjälp och installation"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button>
     </div>
   </header>
@@ -76,7 +78,7 @@
             <div class="question-examples" aria-label="Exempel på sökningar"><button data-question="Friskvård">Friskvård</button><button data-question="Arbetskläder">Arbetskläder</button><button data-question="Förmånscykel">Förmånscykel</button></div>
             <div id="answer" class="answer" role="status" aria-live="polite" hidden></div><small>Läs alltid hela rutinen när du behöver mer information.</small>
           </section>
-          <button class="install-tile install-help"><span class="install-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span><span><strong>Handboken i mobilen</strong><span>Lägg till på hemskärmen</span></span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+          <button class="install-tile" id="install-tile" type="button"><span class="install-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span><span><strong>Handboken i mobilen</strong><span>Lägg till på hemskärmen</span></span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
         </aside>
       </div>
     </section>
@@ -94,7 +96,7 @@
   <nav class="mobile-nav" aria-label="Mobilmeny"><a href="#oversikt" class="active" data-view="home"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>Översikt</a><a href="#dokument" data-view="documents"><svg class="icon" aria-hidden="true"><use href="#i-documents"/></svg>Dokument</a><a href="#blanketter" data-view="forms"><svg class="icon" aria-hidden="true"><use href="#i-forms"/></svg>Blanketter</a><a href="#favoriter" data-view="favorites"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>Favoriter</a></nav>
 </div>
 <dialog id="reader" aria-labelledby="reader-title"><div class="reader-head"><button id="close-reader" class="secondary">← Tillbaka</button><button id="reader-favorite" class="secondary">☆ Spara</button></div><div class="reader-body"><span class="eyebrow" id="reader-meta"></span><h2 id="reader-title"></h2><div class="reader-actions"><a id="download" class="primary" download>Hämta original</a><button id="share" class="secondary">Kopiera länk</button></div><p class="reading-note" id="reader-note">Textvy · Bilder, diagram och fullständig formatering visas i originalfilen.</p><div id="reader-content"></div></div></dialog>
-<dialog id="help" aria-labelledby="help-title"><button id="close-help" class="close" aria-label="Stäng"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button><span class="eyebrow">PERSONALHANDBOK</span><h2 id="help-title">Det du behöver i arbetsdagen.</h2><p>På översikten hittar du genvägar, kategorier och de senast ändrade dokumenten. Blanketter har en egen sida där du kan söka och hämta originalfiler.</p><h3>Lägg till på hemskärmen</h3><p><strong>iPhone:</strong> öppna i Safari, tryck på Dela och välj Lägg till på hemskärmen.</p><p><strong>Android:</strong> öppna webbläsarens meny och välj Installera app eller Lägg till på startskärmen.</p><h3>Dokument och favoriter</h3><p>Word (.docx) och PowerPoint (.pptx) får en sökbar textvy. PDF, Excel och äldre Officefiler kan sökas på namn och kategori och hämtas i original. Favoriter sparas på den här enheten.</p></dialog>
+<dialog id="help" aria-labelledby="help-title"><button id="close-help" class="close" aria-label="Stäng"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button><span class="eyebrow">PERSONALHANDBOK</span><h2 id="help-title">Det du behöver i arbetsdagen.</h2><p>På översikten hittar du genvägar, kategorier och de senast ändrade dokumenten. Blanketter har en egen sida där du kan söka och hämta originalfiler.</p><h3>Lägg till på hemskärmen</h3><p id="install-instructions">Välj Installera app för att komma igång.</p><button id="install-from-help" class="primary" type="button">Installera app</button><p><strong>iPhone:</strong> öppna i Safari, tryck på Dela och välj Lägg till på hemskärmen.</p><p><strong>Android:</strong> öppna webbläsarens meny och välj Installera app eller Lägg till på startskärmen.</p><h3>Dokument och favoriter</h3><p>Word (.docx) och PowerPoint (.pptx) får en sökbar textvy. PDF, Excel och äldre Officefiler kan sökas på namn och kategori och hämtas i original. Favoriter sparas på den här enheten.</p></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <noscript><p class="noscript">Aktivera JavaScript för att söka och läsa personalhandboken.</p></noscript>
 </body>
