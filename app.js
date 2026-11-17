@@ -164,6 +164,27 @@ $('#close-reader').onclick=()=>$('#reader').close();
 $('#reader').addEventListener('close',()=>{if(suppressReaderClose){suppressReaderClose=false;return;}state.current=null;if(location.hash.startsWith('#dokument/')){if(history.state?.handbookReader&&history.state.readerOrigin)history.back();else{history.replaceState({handbookPage:true},'',returnHash);route();}}});
 $('#reader-favorite').onclick=()=>state.current&&saveFavorite(state.current.id);
 $('#share').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$('#share').textContent='Länk kopierad';setTimeout(()=>$('#share').textContent='Kopiera länk',2000);}catch{$('#share').textContent='Kopiera adressen i adressfältet';}};
+let installPrompt=null;
+const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;});
+window.addEventListener('appinstalled',()=>{installPrompt=null;$('#install-app').hidden=true;$('#install-tile').hidden=true;$('#help').close();toast('Personalhandboken är installerad!');});
+function installGuide(){
+ const instructions=$('#install-instructions');
+ if(ios){instructions.textContent='iPhone/iPad: Öppna sidan i Safari, tryck på Dela (fyrkanten med pil uppåt), välj Lägg till på hemskärmen och tryck Lägg till.';}
+ else if(/Android/i.test(navigator.userAgent)){instructions.textContent='Android: Öppna sidan i Chrome, tryck på menyn ⋮ och välj Installera app eller Lägg till på startskärmen.';}
+ else{instructions.textContent='Öppna webbläsarens meny och välj Installera app. Om valet saknas kan webbläsaren inte installera sidan här.';}
+ $('#help').showModal();
+}
+async function installApp(){
+ if(standalone()){toast('Appen finns redan på hemskärmen.');return;}
+ if(installPrompt){const prompt=installPrompt;installPrompt=null;await prompt.prompt();return;}
+ installGuide();
+}
+$('#install-app').onclick=installApp;
+$('#install-tile').onclick=installApp;
+$('#install-from-help').onclick=()=>{if(installPrompt){$('#help').close();installApp();}else{$('#install-instructions').scrollIntoView({block:'nearest'});}};
+if(standalone()){$('#install-app').hidden=true;$('#install-tile').hidden=true;}
 document.querySelectorAll('.install-help').forEach(button=>button.onclick=()=>$('#help').showModal());$('#close-help').onclick=()=>$('#help').close();
 document.querySelectorAll('a[href="#main"]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();$('#main').focus();$('#main').scrollIntoView({block:'start'});}));
 window.addEventListener('popstate',route);window.addEventListener('hashchange',route);
