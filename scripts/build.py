@@ -1,4 +1,4 @@
-"""Build a static handbook; Office originals remain in dokument/. No dependencies."""
+"""Build a static handbook and forms library. No external dependencies."""
 from pathlib import Path
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 P = '{http://schemas.openxmlformats.org/presentationml/2006/main}'
-SUPPORTED = {'.docx', '.pptx', '.doc', '.ppt', '.pdf'}
+SUPPORTED = {'.docx', '.pptx', '.doc', '.ppt', '.pdf', '.xlsx', '.xls'}
 
 def paragraphs(node, namespace):
     if node is None:
@@ -61,12 +61,19 @@ def build(destination):
     out = Path(destination)
     if out.exists(): shutil.rmtree(out)
     shutil.copytree(ROOT/'web',out)
-    shutil.copytree(ROOT/'dokument', out/'dokument',ignore=shutil.ignore_patterns('README.md','.gitkeep'))
+    sources = [ROOT/'dokument', ROOT/'blanketter']
+    for source in sources:
+        if source.is_dir():
+            shutil.copytree(source, out/source.name, ignore=shutil.ignore_patterns('README.md','.gitkeep','~$*'))
     docs=[]
-    for path in sorted((ROOT/'dokument').rglob('*')):
+    paths = sorted(path for source in sources if source.is_dir() for path in source.rglob('*'))
+    for path in paths:
         if not path.is_file() or path.suffix.lower() not in SUPPORTED or path.name.startswith('~$'): continue
         relative=path.relative_to(ROOT).as_posix()
-        category=path.parent.name if path.parent != ROOT/'dokument' else 'Övrigt'
+        parts = path.relative_to(ROOT).parts
+        kind = 'form' if any(part.casefold() == 'blanketter' for part in parts[:-1]) else 'document'
+        category = ('Blanketter' if path.parent.name.casefold() == 'blanketter'
+                    else path.parent.name if path.parent != ROOT/'dokument' else 'Övrigt')
         blocks=[]; warning=None
         if path.suffix.lower() in {'.docx','.pptx'}:
             try: blocks=extract(path)
@@ -78,11 +85,12 @@ def build(destination):
         if not text.strip() and not warning: warning='Ingen text hittades. Öppna originalet för att se bilder och innehåll.'
         stamp=subprocess.run(['git','log','-1','--format=%cs','--',relative],cwd=ROOT,capture_output=True,text=True).stdout.strip()
         docs.append({'id':hashlib.sha256(relative.encode()).hexdigest()[:16], 'title':path.stem.replace('_',' '),
-          'category':category,'format':path.suffix[1:].upper(),'path':relative,'updated':stamp or None,
+          'kind':kind,'category':category,'format':path.suffix[1:].upper(),'path':relative,'updated':stamp or None,
           'size':path.stat().st_size,'blocks':blocks,'text':text,'warning':warning})
     (out/'catalog.json').write_text(json.dumps({'documents':docs},ensure_ascii=False),encoding='utf-8')
     (out/'.nojekyll').touch()
-    print(f'Built {len(docs)} documents → {out}')
+    form_count = sum(doc['kind'] == 'form' for doc in docs)
+    print(f'Built {len(docs) - form_count} documents and {form_count} forms → {out}')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(); parser.add_argument('--out',default=str(ROOT/'dist')); args=parser.parse_args(); build(args.out)
